@@ -86,7 +86,7 @@ with DAG(
 
         mounts=[DBT_PROJECT_MOUNT, DBT_PROFILES_MOUNT],
         do_xcom_push=False,
-    ), 
+    ) 
 
     dbt_run_marts = DockerOperator(
         task_id="dbt_run_marts",
@@ -99,7 +99,7 @@ with DAG(
         working_dir="/usr/app/northwind_transformations",
 
         entrypoint=["dbt"],
-        command="run --select marts",
+        command="run --select path:models/marts",
 
         mounts=[DBT_PROJECT_MOUNT, DBT_PROFILES_MOUNT],
         do_xcom_push=False,

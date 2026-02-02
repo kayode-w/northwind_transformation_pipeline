@@ -79,7 +79,7 @@ services:
       - ./dbt/.dbt:/root/.dbt
     networks:
       - elt_net
-    entrypoint: ["bash", "-lc"]
+    entrypoint: ["dbt"] #["bash", "-lc"]
 
 volumes:
   pgdata:
