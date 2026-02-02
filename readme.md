@@ -39,6 +39,81 @@ Think of it like building a tiny factory:
 
 ---
 
+## Transformation layer (the part that actually makes reporting possible)
+
+This project uses a simple two-layer transformation approach:
+
+1) Staging schema (analytics_staging)
+
+  This is the “clean-up crew”.
+  
+  - Basic renaming (turning weird column names into readable ones)
+  - Standardized types (dates as dates, ids as ids)
+  - Light reshaping so downstream models don’t have to fight the raw structure
+
+  The goal is not “business logic” here — it’s consistency.
+
+2) Business logic / reporting schema (analytics)
+
+  This is the “reporting-ready zone”.
+
+  This layer answers questions the business cares about:
+
+  - What’s our revenue and order totals by product?
+  - Who are our customers, what do they spend, when did they first buy?
+  - What does a clean fact table look like for BI tools?
+
+  This is where I built the final fact models used for analytics.
+
+## Final models 
+  1) orders_facts
+
+  This model prepares order-level reporting by combining orders, order positions, and product details.
+  What it’s doing:
+
+  - Starts from orders and joins order positions to calculate totals.
+  - Builds metrics like:
+
+    - total_orders (units / quantity)
+    - order_total (value)
+    - total_shipping_cost
+
+  - Joins to products (via articles) to bring in product metadata like category and gender.
+
+  ### Why this matters for reporting:
+  This becomes the “single place” to power dashboards like:
+
+    - Sales by product/category
+    - Order trends over time
+    - Customer buying behaviour linked to product attributes
+
+  2) customers_fact
+
+  This model turns raw customer rows into something a dashboard can actually use.
+  What it’s doing:
+
+  Builds a clean customer profile:
+  - full name
+  - age (derived)
+  - address (assembled from multiple fields)
+  - registration date
+
+  Joins aggregated order behaviour onto each customer:
+  - first_order_date
+  - last_order_date
+  - total_orders
+  - total_spend
+
+### Why this matters for reporting:
+This gives an easy “customer 360” table. It powers things like:
+
+  - customer segmentation
+  - repeat purchase metrics
+  - lifetime spend / order counts
+  - retention-style analysis (even in a basic form)
+
+---
+
 ## Why I built it
 
 I wanted something that teaches the fundamentals without needing cloud infrastructure first, it's helped me understand basic plumbing and how endineers spend > 70% of their time debugging. 
