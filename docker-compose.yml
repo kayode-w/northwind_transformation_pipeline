@@ -1,0 +1,90 @@
+services:
+  # 1) Your "data warehouse" Postgres (Northwind lives here)
+  postgres:
+    image: postgres:17
+    container_name: project_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: northwind
+    ports:
+      - "5434:5432"   # Mac:5434 -> Container:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - elt_net
+
+  # 2) Airflow metadata Postgres (Airflow uses this for its own internal tables)
+  airflow-db:
+    image: postgres:15
+    container_name: project_airflow_db
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_pgdata:/var/lib/postgresql/data
+    networks:
+      - elt_net
+
+  airflow-webserver:
+    image: apache/airflow:2.9.2
+    container_name: project_airflow_web
+    depends_on:
+      - airflow-db
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      PROJECT_ROOT: "${PROJECT_ROOT}"
+      AIRFLOW__WEBSERVER__SECRET_KEY: "${AIRFLOW_SECRET_KEY}"
+    volumes:
+      - ./:/opt/project
+      - ./airflow/dags:/opt/airflow/dags
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8080:8080"
+    networks:
+      - elt_net
+    command: webserver
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.2
+    container_name: project_airflow_scheduler
+    depends_on:
+      - airflow-webserver
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      PROJECT_ROOT: "${PROJECT_ROOT}"
+      AIRFLOW__WEBSERVER__SECRET_KEY: "${AIRFLOW_SECRET_KEY}"
+    volumes:
+      - ./:/opt/project
+      - ./airflow/dags:/opt/airflow/dags
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - elt_net
+    command: scheduler
+
+  # dbt: short commands forever
+  dbt:
+    build:
+      context: ./dbt
+    image: local/dbt-postgres:latest
+    working_dir: /usr/app/northwind_transformations
+    volumes:
+      - ./dbt/northwind_transformations:/usr/app/northwind_transformations
+      - ./dbt/.dbt:/root/.dbt
+    networks:
+      - elt_net
+    entrypoint: ["bash", "-lc"]
+
+volumes:
+  pgdata:
+  airflow_pgdata:
+
+networks:
+  elt_net:
+    driver: bridge

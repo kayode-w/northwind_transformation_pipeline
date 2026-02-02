@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: staging
+    database: northwind
+    schema: webshop   # this is your raw schema where the restored tables live
+    tables:
+      - name: customer
+      - name: "order"
+      - name: order_positions
+      - name: articles
+      - name: address
+      - name: stock
+      - name : products
+      - name: sizes
+      - name : colors
+      - name: labels

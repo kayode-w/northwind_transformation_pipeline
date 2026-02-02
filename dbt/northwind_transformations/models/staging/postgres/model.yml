@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: postgres_stg_customers
+    description: "customer information details"
+    columns:
+      - name: customer_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+
+  - name: postgres_stg_orders
+    description: "Orders information"
+    columns:
+      - name: order_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+
+  - name: postgres_stg_products
+    description: "Products information"
+    columns:
+      - name: product_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+
+  - name: postgres_stg_customer_address
+    description: "Customer address information"
+    columns:
+      - name: address_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key to customer"
+        tests:
+          - not_null
+
+  - name: postgres_stg_order_positions
+    description: "Order positions information"
+    columns:
+      - name: order_position_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
